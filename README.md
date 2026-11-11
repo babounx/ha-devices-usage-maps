@@ -14,6 +14,9 @@ See at a glance **what every device in Home Assistant is used for**: which autom
 - **Live**: data is read from Home Assistant when the page opens and refreshed automatically when devices, entities, automations, scripts, scenes or dashboards change.
 - **Your language**: follows each user's Home Assistant language (English and French included, contributions welcome).
 
+<img width="1392" height="1635" alt="maps" src="https://github.com/user-attachments/assets/35e705b0-5bf1-4ef7-bde4-e1a3f557706e" />
+
+
 ## Installation
 
 ### HACS (recommended)
