@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 DOMAIN = "devices_usage_maps"
-NAME = "Devices Usage Maps"
+NAME = "Devices Maps"
 VERSION = "0.1.0"
 
 # Static files (the frontend bundle) are served from this URL.
