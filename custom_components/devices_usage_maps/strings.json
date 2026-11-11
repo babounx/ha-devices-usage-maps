@@ -1,0 +1,40 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Devices Usage Maps",
+        "description": "Shows how every device and entity is used by automations, scripts, scenes, dashboards and the Energy dashboard. The card is always available; choose here whether to add a page to the sidebar.",
+        "data": {
+          "show_in_sidebar": "Show in the sidebar",
+          "sidebar_title": "Sidebar title",
+          "sidebar_icon": "Sidebar icon",
+          "require_admin": "Administrators only"
+        },
+        "data_description": {
+          "show_in_sidebar": "Adds a full page to the sidebar. The card can be used either way.",
+          "require_admin": "Recommended: reading automation configurations requires an administrator account."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Devices Usage Maps is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Devices Usage Maps",
+        "data": {
+          "show_in_sidebar": "Show in the sidebar",
+          "sidebar_title": "Sidebar title",
+          "sidebar_icon": "Sidebar icon",
+          "require_admin": "Administrators only"
+        },
+        "data_description": {
+          "show_in_sidebar": "Turn off to remove the page from the sidebar. The card stays available.",
+          "require_admin": "Recommended: reading automation configurations requires an administrator account."
+        }
+      }
+    }
+  }
+}

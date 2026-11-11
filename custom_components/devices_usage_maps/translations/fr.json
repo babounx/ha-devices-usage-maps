@@ -1,0 +1,40 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Devices Usage Maps",
+        "description": "Montre comment chaque appareil et chaque entité sont utilisés par les automatisations, scripts, scènes, tableaux de bord et le tableau Énergie. La carte est toujours disponible ; choisissez ici d'ajouter ou non une page dans la barre latérale.",
+        "data": {
+          "show_in_sidebar": "Afficher dans la barre latérale",
+          "sidebar_title": "Titre dans la barre latérale",
+          "sidebar_icon": "Icône dans la barre latérale",
+          "require_admin": "Réservé aux administrateurs"
+        },
+        "data_description": {
+          "show_in_sidebar": "Ajoute une page complète dans la barre latérale. La carte reste utilisable dans tous les cas.",
+          "require_admin": "Recommandé : la lecture des automatisations nécessite un compte administrateur."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Devices Usage Maps est déjà configuré."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Devices Usage Maps",
+        "data": {
+          "show_in_sidebar": "Afficher dans la barre latérale",
+          "sidebar_title": "Titre dans la barre latérale",
+          "sidebar_icon": "Icône dans la barre latérale",
+          "require_admin": "Réservé aux administrateurs"
+        },
+        "data_description": {
+          "show_in_sidebar": "Désactivez pour retirer la page de la barre latérale. La carte reste disponible.",
+          "require_admin": "Recommandé : la lecture des automatisations nécessite un compte administrateur."
+        }
+      }
+    }
+  }
+}

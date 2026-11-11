@@ -1,0 +1,14 @@
+{
+  "domain": "devices_usage_maps",
+  "name": "Devices Usage Maps",
+  "codeowners": ["@babounx"],
+  "config_flow": true,
+  "dependencies": ["frontend", "http", "panel_custom"],
+  "documentation": "https://github.com/babounx/ha-devices-usage-maps",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/babounx/ha-devices-usage-maps/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.1.0"
+}
