@@ -11,6 +11,7 @@ See at a glance **what every device in Home Assistant is used for**: which autom
 - **Overview**: Home Assistant in the centre, your integrations grouped by family (radio & protocols, cameras, local network, cloud, system, helpers). Each bubble shows the number of devices and the share used somewhere.
 - **By device**: a diagram *Integration → Device → Entities → Automations / scripts / scenes / dashboard views / Energy*, plus a table of every entity.
 - **By automation**: the reverse view — every device and area an automation, script or scene touches.
+- **Search**: type an entity id (or part of it, e.g. `position_bureau`), a device or an automation name, and see every place it appears — devices, automations, scripts, scenes (anywhere in their configuration, templates included), dashboard views, **YAML files of the configuration folder** (file and line) and UI helpers (groups, templates, min/max…).
 - **Device health**: one table of the devices that cause trouble — offline (and for how long), partly offline, unstable (drop-outs counted over the last 24 h of history), dead Z-Wave nodes, low batteries, entities no longer provided — ranked by severity, with what depends on each device.
 - **Broken references**: lists every entity, device, area, label or action that an automation, script, scene or dashboard still uses although it no longer exists (renamed or deleted entity, removed device, entity no longer provided by its integration, missing action), with the step where it is used and a guess at what a renamed entity became.
 - **Everything is clickable**: devices, entities, automations, scripts, scenes, integrations, areas, dashboard views and the Energy dashboard open directly in Home Assistant.
@@ -60,7 +61,7 @@ All options are available in the visual editor.
 
 ## Releasing
 
-The version number appears in `manifest.json`, `const.py`, `frontend/devices-usage-maps.js` and in the `?v=` suffix of every frontend import (so browsers never mix old and new files). Update all of them, then publish a GitHub release whose tag matches (for example `v1.2.0`) so HACS offers the update.
+The version number appears in `manifest.json`, `const.py`, `frontend/devices-usage-maps.js` and in the `?v=` suffix of every frontend import (so browsers never mix old and new files). Update all of them, then publish a GitHub release whose tag matches (for example `v1.3.0`) so HACS offers the update.
 
 ## Translations
 
@@ -68,7 +69,7 @@ Translations live in `custom_components/devices_usage_maps/frontend/src/translat
 
 ## Privacy
 
-Nothing leaves your Home Assistant. The integration only serves the frontend files; all reading happens in your browser through Home Assistant's WebSocket API, and nothing is written.
+Nothing leaves your Home Assistant and nothing is written. The integration serves the frontend files and one read-only, admin-only WebSocket command used by the search: it reads the `.yaml` files of the configuration folder (never `secrets.yaml`, `.storage` or `custom_components`) and the options of config entries. Everything else is read in your browser through Home Assistant's WebSocket API.
 
 ## License
 
@@ -84,6 +85,7 @@ Voyez d'un coup d'œil **à quoi sert chaque appareil de Home Assistant** : les 
 - **Vue d'ensemble** : Home Assistant au centre, vos intégrations regroupées par famille. Chaque bulle indique le nombre d'appareils et la part utilisée.
 - **Par appareil** : schéma *Intégration → Appareil → Entités → Automatisations / scripts / scènes / vues / Énergie*, et tableau de toutes les entités.
 - **Par automatisation** : la vue inverse, avec les appareils et pièces touchés.
+- **Recherche** : tapez un entity_id (ou une partie, par ex. `position_bureau`), un appareil ou une automatisation, et voyez tous les endroits où il apparaît — appareils, automatisations, scripts, scènes (n'importe où dans leur configuration, templates compris), vues de tableaux de bord, **fichiers YAML du dossier de configuration** (fichier et ligne) et entrées d'aide (groupes, modèles, min/max…).
 - **Santé** : un tableau des appareils qui posent problème — hors ligne (et depuis quand), partiellement hors ligne, instables (coupures comptées sur les dernières 24 h), nœuds Z-Wave morts, batteries faibles, entités plus fournies — classés par gravité, avec ce qui dépend de chacun.
 - **Références cassées** : tout ce qu'une automatisation, un script, une scène ou un tableau de bord utilise encore alors que cela n'existe plus (entité renommée ou supprimée, appareil retiré, entité plus fournie par son intégration, action disparue), avec l'étape concernée et une proposition quand l'entité semble avoir été renommée.
 - **Tout est cliquable** et ouvre directement la page correspondante dans Home Assistant.

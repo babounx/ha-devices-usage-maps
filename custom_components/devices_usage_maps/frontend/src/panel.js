@@ -1,7 +1,7 @@
 // Devices Usage Maps — sidebar panel (registered by the integration when
 // "Show in the sidebar" is enabled in its options).
-import "./view.js?v=1.2.0";
-import { translator } from "./i18n.js?v=1.2.0";
+import "./view.js?v=1.3.0";
+import { translator } from "./i18n.js?v=1.3.0";
 
 class DevicesUsageMapsPanel extends HTMLElement {
   constructor() {

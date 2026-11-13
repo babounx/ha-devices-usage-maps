@@ -1,7 +1,7 @@
 // Devices Usage Maps — live data collection.
 // Everything comes from Home Assistant's WebSocket API; nothing is stored.
-import { findBroken } from "./broken.js?v=1.2.0";
-import { fetchDrops, computeHealth } from "./health.js?v=1.2.0";
+import { findBroken } from "./broken.js?v=1.3.0";
+import { fetchDrops, computeHealth } from "./health.js?v=1.3.0";
 
 const ENTITY_ID_RE = /\b([a-z_][a-z0-9_]*)\.([a-z0-9_]+)\b/g;
 const RUNNABLE_DOMAINS = ["automation", "script", "scene"];
@@ -176,6 +176,12 @@ export async function collect(hass, onProgress = () => {}) {
   });
   const broken = findBroken({ states, services: hass.services, entityReg, devices, areas, floors, labels }, brokenItems);
 
+  // ---------- full-text index (global search) ----------
+  const configText = {};
+  for (const it of brokenItems) {
+    try { configText[it.source.nav] = JSON.stringify(it.config).toLowerCase(); } catch (e) { /* ignore */ }
+  }
+
   // ---------- energy ----------
   const energySet = energy ? findIds(energy, known) : new Set();
 
@@ -301,6 +307,7 @@ export async function collect(hass, onProgress = () => {}) {
     runnables,
     views,
     broken,
+    configText,
     integrations: [...integrations.values()],
     areas: areas.map((a) => ({ id: a.area_id, name: a.name })),
     entityCount: known.size,

@@ -1,9 +1,9 @@
 // Devices Usage Maps — core view shared by the card and the sidebar panel.
-import { collect, REFRESH_EVENTS } from "./collector.js?v=1.2.0";
-import { flowDiagram, esc } from "./diagram.js?v=1.2.0";
-import { translator } from "./i18n.js?v=1.2.0";
-import { follow } from "./navigation.js?v=1.2.0";
-import { styles } from "./styles.js?v=1.2.0";
+import { collect, REFRESH_EVENTS } from "./collector.js?v=1.3.0";
+import { flowDiagram, esc } from "./diagram.js?v=1.3.0";
+import { translator } from "./i18n.js?v=1.3.0";
+import { follow } from "./navigation.js?v=1.3.0";
+import { styles } from "./styles.js?v=1.3.0";
 
 const CAT_ORDER = ["protocol", "camera", "local", "cloud", "system", "helper"];
 const RUN_KIND = { automation: "automation", script: "script", scene: "scene" };
@@ -15,8 +15,10 @@ export class DevicesUsageMapsView extends HTMLElement {
     this._config = { view: "overview", show_services: false };
     this._state = {
       tab: null, selected: null,
-      q: "", area: "", integ: "", usage: "all", services: false, autoFilter: "all",
+      q: "", area: "", integ: "", usage: "all", services: false, autoFilter: "all", gq: "",
     };
+    this._yaml = null;
+    this._yamlTimer = null;
     this._model = null;
     this._loading = false;
     this._progress = null;
@@ -122,6 +124,7 @@ export class DevicesUsageMapsView extends HTMLElement {
 
   _onInput(ev) {
     const el = ev.target;
+    if (el.hasAttribute?.("data-gsearch")) { if (ev.type === "input") this._onSearch(el.value); return; }
     const key = el.dataset?.filter;
     if (!key) return;
     this._state[key] = el.type === "checkbox" ? el.checked : el.value;
@@ -136,7 +139,8 @@ export class DevicesUsageMapsView extends HTMLElement {
     let el;
     if ((el = find("data-nav"))) { ev.stopPropagation(); follow(this, el.getAttribute("data-nav"), this._model); return; }
     if ((el = find("data-refresh"))) { this._load(); return; }
-    if ((el = find("data-tab"))) { this._state.tab = el.getAttribute("data-tab"); this._state.selected = null; this._render(); return; }
+    if ((el = find("data-tab"))) { this._state.tab = el.getAttribute("data-tab"); this._state.selected = null; this._state.gq = ""; this._render(); return; }
+    if ((el = find("data-gclear"))) { this._state.gq = ""; this._render(); return; }
     if ((el = find("data-brokenfilter"))) { this._state.brokenAll = !this._state.brokenAll; this._render(); return; }
     if ((el = find("data-stat"))) { this._applyStat(el.getAttribute("data-stat")); return; }
     if ((el = find("data-integ"))) {
@@ -156,6 +160,7 @@ export class DevicesUsageMapsView extends HTMLElement {
   }
 
   _applyStat(k) {
+    this._state.gq = "";
     if (k === "broken" || k === "health") { Object.assign(this._state, { tab: k, selected: null }); this._render(); return; }
     if (k === "on") Object.assign(this._state, { tab: "automations", autoFilter: "on", kindFilter: "automation", q: "", selected: null });
     else Object.assign(this._state, { tab: "devices", usage: k, q: "", area: "", integ: "", services: false, selected: null });
@@ -225,12 +230,13 @@ export class DevicesUsageMapsView extends HTMLElement {
     let body;
     if (this._error) body = `<div class="box center error">${esc(this._error)}</div>`;
     else if (!this._model) body = `<div class="box center" id="progress">${esc(this._progressText())}</div>`;
+    else if (this._searching()) body = `<div class="box detail" id="sres">${this._searchHtml()}</div>`;
     else if (this._state.tab === "overview") body = this._overviewHtml();
     else if (this._state.tab === "broken") body = this._brokenHtml();
     else if (this._state.tab === "health") body = this._healthHtml();
     else body = `<div class="main${this._narrow ? " narrow" : ""}"><aside class="side"><div class="filters" id="filters"></div><div class="list" id="list"></div></aside><section class="box detail" id="detail"></section></div>`;
 
-    const tab = (k) => `<button class="tab" data-tab="${k}" aria-pressed="${this._state.tab === k}">${esc(t(`tabs.${k}`))}</button>`;
+    const tab = (k) => `<button class="tab" data-tab="${k}" aria-pressed="${!this._searching() && this._state.tab === k}">${esc(t(`tabs.${k}`))}</button>`;
     const time = this._model ? this._model.generatedAt.toLocaleTimeString(this._hass?.locale?.language || undefined, { hour: "2-digit", minute: "2-digit" }) : "";
     root.innerHTML = `<style>${styles}</style>
       <div class="wrap" style="${h}">
@@ -238,12 +244,13 @@ export class DevicesUsageMapsView extends HTMLElement {
           ${this._config.mode === "panel" ? "" : `<h1>${esc(this._config.title || t("title"))}</h1>`}
           ${time ? `<span class="updated">${esc(t("updated", { time }))}</span>` : ""}
           <button class="iconbtn" data-refresh title="${esc(t("refresh"))}" aria-label="${esc(t("refresh"))}">⟳</button>
+          ${this._model ? `<div class="gsearch"><input type="search" id="dum-gq" data-gsearch autocomplete="off" spellcheck="false" placeholder="${esc(t("search.placeholder"))}" value="${esc(this._state.gq)}" aria-label="${esc(t("search.placeholder"))}"></div>` : ""}
           <div class="tabs" role="group">${tab("overview")}${tab("devices")}${tab("automations")}${tab("health")}${tab("broken")}</div>
         </div>
         ${this._model ? this._statsHtml() : ""}
         ${body}
       </div>`;
-    if (this._model && (this._state.tab === "devices" || this._state.tab === "automations")) this._renderExplorer(true);
+    if (this._model && !this._searching() && (this._state.tab === "devices" || this._state.tab === "automations")) this._renderExplorer(true);
   }
 
   _progressText() {
@@ -387,6 +394,137 @@ export class DevicesUsageMapsView extends HTMLElement {
     return `<div class="box detail">${head}
       <div class="tbl"><table><thead><tr><th>${esc(t("detail.device"))}</th><th>${esc(t("detail.area"))}</th><th>${esc(t("detail.integration"))}</th><th>${esc(t("health.col_problems"))}</th><th>${esc(t("health.col_used"))}</th></tr></thead><tbody>${rows}</tbody></table></div>
     </div>`;
+  }
+
+  // ---------- global search ----------
+  _searching() { return !!this._model && this._state.gq.trim().length >= 2; }
+
+  _onSearch(value) {
+    const was = this._searching();
+    this._state.gq = value;
+    const now = this._searching();
+    if (was !== now) {
+      this._render();
+      const inp = this.shadowRoot.getElementById("dum-gq");
+      if (inp) { inp.focus(); inp.setSelectionRange(value.length, value.length); }
+    } else if (now) {
+      const box = this.shadowRoot.getElementById("sres");
+      if (box) box.innerHTML = this._searchHtml();
+    }
+    clearTimeout(this._yamlTimer);
+    const q = value.trim();
+    if (q.length >= 3) this._yamlTimer = setTimeout(() => this._searchFiles(q), 400);
+  }
+
+  async _searchFiles(q) {
+    if (this._yaml && this._yaml.q === q && !this._yaml.error) return;
+    this._yaml = { q, loading: true };
+    this._refreshSearch(q);
+    try {
+      const res = await this._hass.callWS({ type: "devices_usage_maps/search", query: q });
+      this._yaml = { q, ...res };
+    } catch (e) {
+      this._yaml = { q, error: e?.code === "unknown_command" ? "old" : (e?.message || String(e)) };
+    }
+    this._refreshSearch(q);
+  }
+
+  _refreshSearch(q) {
+    if (this._state.gq.trim() !== q) return;
+    const box = this.shadowRoot.getElementById("sres");
+    if (box) box.innerHTML = this._searchHtml();
+  }
+
+  _hl(text, q) {
+    const s = String(text ?? "");
+    const i = s.toLowerCase().indexOf(q.toLowerCase());
+    if (!q || i < 0) return esc(s);
+    return esc(s.slice(0, i)) + "<mark>" + esc(s.slice(i, i + q.length)) + "</mark>" + esc(s.slice(i + q.length));
+  }
+
+  _searchHtml() {
+    const t = this.t, m = this._model;
+    const q = this._state.gq.trim();
+    const ql = q.toLowerCase();
+    const LIMIT = 40;
+    const sec = (title, n, html) => `<h3 class="sh">${esc(title)} <span class="cnt">${n}</span></h3>${html}`;
+    const out = [];
+
+    // entities
+    const ents = [];
+    for (const d of m.devices) for (const e of d.entities) {
+      if (e.id.toLowerCase().includes(ql) || String(e.name).toLowerCase().includes(ql)) ents.push({ e, d });
+    }
+    ents.sort((a, b) => (b.e.id.toLowerCase() === ql) - (a.e.id.toLowerCase() === ql) || a.e.id.localeCompare(b.e.id));
+    if (ents.length) {
+      const rows = ents.slice(0, LIMIT).map(({ e, d }) => {
+        const [u, v] = this._usageTags(e);
+        const dev = d.virtual
+          ? `<button class="lnk" data-nav="integration:${esc(d.domain)}">${esc(d.integration)}</button>`
+          : `<button class="lnk" data-nav="device:${esc(d.id)}">${esc(d.name)}</button>`;
+        return `<tr><td><button class="lnk" data-nav="entity:${esc(e.id)}">${this._hl(e.name, q)}</button><div class="eid">${this._hl(e.id, q)}</div></td>
+          <td>${dev}${d.area ? `<div class="none">${esc(d.area)}</div>` : ""}</td><td>${esc(e.state)}</td><td>${u}</td><td>${v}</td></tr>`;
+      }).join("");
+      out.push(sec(t("search.entities"), ents.length, `<div class="tbl"><table><thead><tr><th>${esc(t("detail.entity"))}</th><th>${esc(t("detail.device"))}</th><th>${esc(t("detail.state"))}</th><th>${esc(t("detail.automations_scripts"))}</th><th>${esc(t("detail.dashboard_energy"))}</th></tr></thead><tbody>${rows}</tbody></table></div>`
+        + (ents.length > LIMIT ? `<div class="note">${esc(t("search.more", { n: ents.length - LIMIT }))}</div>` : "")));
+    }
+
+    // automations, scripts, scenes, dashboard views mentioning the text
+    const runs = [], views = [];
+    for (const [nav, text] of Object.entries(m.configText || {})) {
+      const isView = nav.startsWith("view:");
+      const id = nav.slice(nav.indexOf(":") + 1);
+      const name = isView ? this._viewLabel(id) : this._runName(id);
+      const inName = String(name).toLowerCase().includes(ql) || id.toLowerCase().includes(ql);
+      if (!inName && !text.includes(ql)) continue;
+      (isView ? views : runs).push({ nav, id, name, inName });
+    }
+    for (const r of Object.values(m.runnables)) {
+      if (m.configText?.[`run:${r.id}`] !== undefined) continue;
+      if (String(r.name).toLowerCase().includes(ql) || r.id.toLowerCase().includes(ql)) runs.push({ nav: `run:${r.id}`, id: r.id, name: r.name, inName: true });
+    }
+    if (runs.length) {
+      runs.sort((a, b) => a.name.localeCompare(b.name));
+      out.push(sec(t("search.runnables"), runs.length, `<div class="pills sl">${runs.map((r) => {
+        const rr = m.runnables[r.id];
+        const kind = RUN_KIND[r.id.split(".")[0]] || "automation";
+        return `<button class="tag ${kind}${rr && !rr.on ? " off" : ""}" data-nav="${esc(r.nav)}" title="${esc(r.id)}">${this._hl(r.name, q)}</button>`;
+      }).join("")}</div><div class="note">${esc(t("search.runnables_hint"))}</div>`));
+    }
+    if (views.length) {
+      out.push(sec(t("search.views"), views.length, `<div class="pills sl">${views.map((v) => `<button class="tag dashboard" data-nav="${esc(v.nav)}">${this._hl(v.name, q)}</button>`).join("")}</div>`));
+    }
+
+    // devices
+    const devs = m.devices.filter((d) => !d.virtual && [d.name, d.model, d.manufacturer].some((x) => String(x || "").toLowerCase().includes(ql)));
+    if (devs.length) {
+      out.push(sec(t("search.devices"), devs.length, `<div class="pills sl">${devs.slice(0, LIMIT).map((d) => `<button class="tag device" data-nav="device:${esc(d.id)}">${this._hl(d.name, q)}${d.area ? ` · ${esc(d.area)}` : ""}</button>`).join("")}</div>`));
+    }
+
+    // YAML files and helpers (backend)
+    const y = this._yaml;
+    let yhtml;
+    if (q.length < 3) yhtml = `<div class="note">${esc(t("search.yaml_min"))}</div>`;
+    else if (!y || y.q !== q || y.loading) yhtml = `<div class="note">${esc(t("search.yaml_loading"))}</div>`;
+    else if (y.error) yhtml = `<div class="note">${esc(y.error === "old" ? t("search.yaml_old") : t("search.yaml_error", { error: y.error }))}</div>`;
+    else {
+      const byFile = new Map();
+      for (const h of y.files || []) { if (!byFile.has(h.file)) byFile.set(h.file, []); byFile.get(h.file).push(h); }
+      const files = [...byFile].map(([f, hs]) => `<div class="yfile"><div class="yname">📄 ${esc(f)}</div>${hs.map((h) => `<div class="yline"><span class="ln">${h.line}</span><code>${this._hl(h.text, q)}</code></div>`).join("")}</div>`).join("");
+      const entries = (y.entries || []).map((e) => `<button class="tag helper" data-nav="integration:${esc(e.domain)}" title="${esc(e.domain)}">${this._hl(e.title || e.domain, q)} <span class="none">(${esc(e.domain)})</span></button>`).join("");
+      const n = (y.files || []).length + (y.entries || []).length;
+      yhtml = n
+        ? `${files}${entries ? `<div class="sub">${esc(t("search.helpers"))}</div><div class="pills sl">${entries}</div>` : ""}${y.truncated ? `<div class="note">${esc(t("search.truncated"))}</div>` : ""}`
+        : `<div class="note">${esc(t("search.yaml_none", { n: y.scanned ?? 0 }))}</div>`;
+      out.push(sec(t("search.yaml"), n, yhtml));
+      yhtml = null;
+    }
+    if (yhtml) out.push(sec(t("search.yaml"), "…", yhtml));
+
+    const found = ents.length + runs.length + views.length + devs.length;
+    return `<div class="dh"><h2>${esc(t("search.heading", { q }))}</h2><button class="iconbtn" data-gclear title="${esc(t("search.clear"))}" aria-label="${esc(t("search.clear"))}">✕</button></div>
+      ${found || (y && y.q === q && ((y.files || []).length || (y.entries || []).length)) ? "" : `<div class="center">${esc(t("search.none"))}</div>`}
+      ${out.join("")}`;
   }
 
   _brokenWhere(b) {

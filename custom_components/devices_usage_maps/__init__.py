@@ -5,7 +5,9 @@ Serves a frontend bundle that provides:
   * a sidebar panel  (``devices-usage-maps-panel``), toggled from the options.
 
 All data is read live by the frontend through Home Assistant's WebSocket API,
-so this integration has no entities, polling or storage of its own.
+so this integration has no entities, polling or storage of its own. The only
+backend feature is a read-only search in the YAML files of the configuration
+folder and in helper options (see websocket.py).
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
+from .websocket import async_register as async_register_websocket
 from .const import (
     CONF_REQUIRE_ADMIN,
     CONF_SHOW_IN_SIDEBAR,
@@ -52,6 +55,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             [StaticPathConfig(STATIC_URL, str(FRONTEND_DIR), cache_headers=False)]
         )
         data["static_registered"] = True
+
+    # Search in YAML files and helper options (admin-only, read-only).
+    if not data.get("ws_registered"):
+        async_register_websocket(hass)
+        data["ws_registered"] = True
 
     # Load the bundle on every frontend page so the card works without
     # adding a dashboard resource by hand.

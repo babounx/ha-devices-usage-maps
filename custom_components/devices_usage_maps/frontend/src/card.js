@@ -1,6 +1,6 @@
 // Devices Usage Maps — Lovelace card: type "custom:devices-usage-maps-card".
-import "./view.js?v=1.2.0";
-import "./editor.js?v=1.2.0";
+import "./view.js?v=1.3.0";
+import "./editor.js?v=1.3.0";
 
 class DevicesUsageMapsCard extends HTMLElement {
   setConfig(config) {

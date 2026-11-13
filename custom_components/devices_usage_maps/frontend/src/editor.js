@@ -1,5 +1,5 @@
 // Devices Usage Maps — visual card editor (uses Home Assistant's ha-form).
-import { translator } from "./i18n.js?v=1.2.0";
+import { translator } from "./i18n.js?v=1.3.0";
 
 class DevicesUsageMapsCardEditor extends HTMLElement {
   setConfig(config) {
