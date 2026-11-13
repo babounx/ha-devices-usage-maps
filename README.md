@@ -11,6 +11,7 @@ See at a glance **what every device in Home Assistant is used for**: which autom
 - **Overview**: Home Assistant in the centre, your integrations grouped by family (radio & protocols, cameras, local network, cloud, system, helpers). Each bubble shows the number of devices and the share used somewhere.
 - **By device**: a diagram *Integration → Device → Entities → Automations / scripts / scenes / dashboard views / Energy*, plus a table of every entity.
 - **By automation**: the reverse view — every device and area an automation, script or scene touches.
+- **Device health**: one table of the devices that cause trouble — offline (and for how long), partly offline, unstable (drop-outs counted over the last 24 h of history), dead Z-Wave nodes, low batteries, entities no longer provided — ranked by severity, with what depends on each device.
 - **Broken references**: lists every entity, device, area, label or action that an automation, script, scene or dashboard still uses although it no longer exists (renamed or deleted entity, removed device, entity no longer provided by its integration, missing action), with the step where it is used and a guess at what a renamed entity became.
 - **Everything is clickable**: devices, entities, automations, scripts, scenes, integrations, areas, dashboard views and the Energy dashboard open directly in Home Assistant.
 - **Live**: data is read from Home Assistant when the page opens and refreshed automatically when devices, entities, automations, scripts, scenes or dashboards change.
@@ -37,7 +38,7 @@ Copy `custom_components/devices_usage_maps` into your `config/custom_components/
 
 ```yaml
 type: custom:devices-usage-maps-card
-view: overview        # overview | devices | automations | broken
+view: overview        # overview | devices | automations | health | broken
 show_services: false  # include service devices (HACS, add-ons, weather…)
 height: 900           # optional, in px; scrolls inside the card
 ```
@@ -56,6 +57,10 @@ All options are available in the visual editor.
 **Requirements**: Home Assistant 2024.12 or newer, and an **administrator account** (the *Related* search and automation configurations are admin-only).
 
 **Limits**: entities built dynamically in templates (for example `states('sensor.' ~ name)`) cannot be detected. Strategy dashboards (generated automatically) contain no entity list.
+
+## Releasing
+
+The version number appears in `manifest.json`, `const.py`, `frontend/devices-usage-maps.js` and in the `?v=` suffix of every frontend import (so browsers never mix old and new files). Update all of them, then publish a GitHub release whose tag matches (for example `v1.2.0`) so HACS offers the update.
 
 ## Translations
 
@@ -79,6 +84,7 @@ Voyez d'un coup d'œil **à quoi sert chaque appareil de Home Assistant** : les 
 - **Vue d'ensemble** : Home Assistant au centre, vos intégrations regroupées par famille. Chaque bulle indique le nombre d'appareils et la part utilisée.
 - **Par appareil** : schéma *Intégration → Appareil → Entités → Automatisations / scripts / scènes / vues / Énergie*, et tableau de toutes les entités.
 - **Par automatisation** : la vue inverse, avec les appareils et pièces touchés.
+- **Santé** : un tableau des appareils qui posent problème — hors ligne (et depuis quand), partiellement hors ligne, instables (coupures comptées sur les dernières 24 h), nœuds Z-Wave morts, batteries faibles, entités plus fournies — classés par gravité, avec ce qui dépend de chacun.
 - **Références cassées** : tout ce qu'une automatisation, un script, une scène ou un tableau de bord utilise encore alors que cela n'existe plus (entité renommée ou supprimée, appareil retiré, entité plus fournie par son intégration, action disparue), avec l'étape concernée et une proposition quand l'entité semble avoir été renommée.
 - **Tout est cliquable** et ouvre directement la page correspondante dans Home Assistant.
 - **En direct** : mise à jour automatique quand vos appareils, automatisations ou tableaux de bord changent.

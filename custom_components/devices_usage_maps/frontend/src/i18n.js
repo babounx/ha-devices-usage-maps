@@ -1,7 +1,7 @@
 // Devices Usage Maps — translations.
 // The language follows each Home Assistant installation/user profile.
-import en from "./translations/en.js";
-import fr from "./translations/fr.js";
+import en from "./translations/en.js?v=1.2.0";
+import fr from "./translations/fr.js?v=1.2.0";
 
 const LANGUAGES = { en, fr };
 

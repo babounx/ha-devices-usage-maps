@@ -1,9 +1,9 @@
 // Devices Usage Maps — core view shared by the card and the sidebar panel.
-import { collect, REFRESH_EVENTS } from "./collector.js";
-import { flowDiagram, esc } from "./diagram.js";
-import { translator } from "./i18n.js";
-import { follow } from "./navigation.js";
-import { styles } from "./styles.js";
+import { collect, REFRESH_EVENTS } from "./collector.js?v=1.2.0";
+import { flowDiagram, esc } from "./diagram.js?v=1.2.0";
+import { translator } from "./i18n.js?v=1.2.0";
+import { follow } from "./navigation.js?v=1.2.0";
+import { styles } from "./styles.js?v=1.2.0";
 
 const CAT_ORDER = ["protocol", "camera", "local", "cloud", "system", "helper"];
 const RUN_KIND = { automation: "automation", script: "script", scene: "scene" };
@@ -126,6 +126,7 @@ export class DevicesUsageMapsView extends HTMLElement {
     if (!key) return;
     this._state[key] = el.type === "checkbox" ? el.checked : el.value;
     if (key === "q" && ev.type === "change") return;
+    if (this._state.tab === "health") { if (ev.type === "change") this._render(); return; }
     this._renderExplorer();
   }
 
@@ -155,7 +156,7 @@ export class DevicesUsageMapsView extends HTMLElement {
   }
 
   _applyStat(k) {
-    if (k === "broken") { Object.assign(this._state, { tab: "broken", selected: null }); this._render(); return; }
+    if (k === "broken" || k === "health") { Object.assign(this._state, { tab: k, selected: null }); this._render(); return; }
     if (k === "on") Object.assign(this._state, { tab: "automations", autoFilter: "on", kindFilter: "automation", q: "", selected: null });
     else Object.assign(this._state, { tab: "devices", usage: k, q: "", area: "", integ: "", services: false, selected: null });
     this._render();
@@ -183,6 +184,7 @@ export class DevicesUsageMapsView extends HTMLElement {
       autosOn: autos.filter((r) => r.on).length,
       autos: autos.length,
       broken: (m.broken || []).filter((b) => !b.disabled && b.source.on).length,
+      sick: (m.health || []).filter((h) => !h.device.service).length,
     };
   }
 
@@ -225,6 +227,7 @@ export class DevicesUsageMapsView extends HTMLElement {
     else if (!this._model) body = `<div class="box center" id="progress">${esc(this._progressText())}</div>`;
     else if (this._state.tab === "overview") body = this._overviewHtml();
     else if (this._state.tab === "broken") body = this._brokenHtml();
+    else if (this._state.tab === "health") body = this._healthHtml();
     else body = `<div class="main${this._narrow ? " narrow" : ""}"><aside class="side"><div class="filters" id="filters"></div><div class="list" id="list"></div></aside><section class="box detail" id="detail"></section></div>`;
 
     const tab = (k) => `<button class="tab" data-tab="${k}" aria-pressed="${this._state.tab === k}">${esc(t(`tabs.${k}`))}</button>`;
@@ -235,7 +238,7 @@ export class DevicesUsageMapsView extends HTMLElement {
           ${this._config.mode === "panel" ? "" : `<h1>${esc(this._config.title || t("title"))}</h1>`}
           ${time ? `<span class="updated">${esc(t("updated", { time }))}</span>` : ""}
           <button class="iconbtn" data-refresh title="${esc(t("refresh"))}" aria-label="${esc(t("refresh"))}">⟳</button>
-          <div class="tabs" role="group">${tab("overview")}${tab("devices")}${tab("automations")}${tab("broken")}</div>
+          <div class="tabs" role="group">${tab("overview")}${tab("devices")}${tab("automations")}${tab("health")}${tab("broken")}</div>
         </div>
         ${this._model ? this._statsHtml() : ""}
         ${body}
@@ -264,6 +267,7 @@ export class DevicesUsageMapsView extends HTMLElement {
       ${b("dash", s.dash, t("stats.dashboard"), clean && st.usage === "dash")}
       ${b("none", s.none, t("stats.unused"), clean && st.usage === "none")}
       ${b("on", `${s.autosOn}/${s.autos}`, t("stats.automations"), st.tab === "automations" && st.autoFilter === "on")}
+      <button class="stat${s.sick ? " bad" : " good"}" data-stat="health" aria-pressed="${st.tab === "health"}"><b>${s.sick}</b>${esc(t("stats.sick"))}</button>
       <button class="stat${s.broken ? " bad" : " good"}" data-stat="broken" aria-pressed="${st.tab === "broken"}"><b>${s.broken}</b>${esc(t("stats.broken"))}</button>
     </div>`;
   }
@@ -312,6 +316,76 @@ export class DevicesUsageMapsView extends HTMLElement {
       <div class="note">${esc(t("overview.used_arc"))}</div>
       <div class="cats">${cats}</div>
       <div class="tbl"><table><thead><tr><th>${esc(t("overview.table_integration"))}</th><th>${esc(t("overview.table_devices"))}</th><th>${esc(t("overview.table_automated"))}</th><th>${esc(t("overview.table_dashboard"))}</th><th>${esc(t("overview.table_unused"))}</th></tr></thead><tbody>${rows}</tbody></table></div>
+    </div>`;
+  }
+
+  _ago(ts) {
+    const t = this.t;
+    if (!ts) return "";
+    const min = Math.max(0, (Date.now() - ts) / 60000);
+    if (min < 90) return t("health.ago_min", { n: Math.round(min) });
+    if (min < 48 * 60) return t("health.ago_h", { n: Math.round(min / 60) });
+    return t("health.ago_d", { n: Math.round(min / 1440) });
+  }
+
+  _problemHtml(p) {
+    const t = this.t;
+    const lvl = p.level >= 3 ? "bad" : p.level === 2 ? "warn" : "";
+    let txt, title = "";
+    switch (p.kind) {
+      case "offline": txt = p.since ? t("health.p.offline_since", { ago: this._ago(p.since) }) : t("health.p.offline"); break;
+      case "partial": txt = t("health.p.partial", { n: p.count, total: p.total }); title = p.entities.join("\n"); break;
+      case "dead": txt = t("health.p.dead"); title = p.entity; break;
+      case "unstable": txt = t("health.p.unstable", { n: p.drops }); break;
+      case "battery": txt = p.low ? t("health.p.battery_low") : t("health.p.battery", { v: Math.round(p.value) }); title = p.entity; break;
+      case "orphan": txt = t("health.p.orphan", { n: p.count }); title = p.entities.join("\n"); break;
+      default: txt = p.kind;
+    }
+    const nav = p.entity ? ` data-nav="entity:${esc(p.entity)}"` : "";
+    return `<${nav ? "button" : "span"} class="pill ${lvl}"${nav}${title ? ` title="${esc(title)}"` : ""}>${esc(txt)}</${nav ? "button" : "span"}>`;
+  }
+
+  _healthHtml() {
+    const t = this.t, m = this._model, st = this._state;
+    const f = st.healthFilter || "all";
+    const all = (m.health || []).filter((h) => st.services || !h.device.service);
+    const list = all.filter((h) => {
+      if (st.healthUsed && !h.used) return false;
+      if (f === "all") return true;
+      if (f === "offline") return h.problems.some((p) => p.kind === "offline" || p.kind === "dead");
+      if (f === "partial") return h.problems.some((p) => p.kind === "partial" || p.kind === "orphan");
+      return h.problems.some((p) => p.kind === f);
+    });
+    const count = (k) => all.filter((h) => h.problems.some((p) => (Array.isArray(k) ? k.includes(p.kind) : p.kind === k))).length;
+    const opt = (v, l) => `<option value="${v}"${v === f ? " selected" : ""}>${esc(l)}</option>`;
+    const head = `<div class="dh"><h2>${esc(t("health.heading"))}</h2></div>
+      <div class="note">${esc(t("health.hint", { low: 20, drops: 3 }))}${m.historyOk ? "" : ` ${esc(t("health.no_history"))}`}</div>
+      <div class="frow hfilters">
+        <select data-filter="healthFilter">
+          ${opt("all", t("health.f.all", { n: all.length }))}
+          ${opt("offline", t("health.f.offline", { n: count(["offline", "dead"]) }))}
+          ${opt("unstable", t("health.f.unstable", { n: count("unstable") }))}
+          ${opt("partial", t("health.f.partial", { n: count(["partial", "orphan"]) }))}
+          ${opt("battery", t("health.f.battery", { n: count("battery") }))}
+        </select>
+        <label class="chk"><input type="checkbox" data-filter="healthUsed"${st.healthUsed ? " checked" : ""}> ${esc(t("health.only_used"))}</label>
+        <label class="chk"><input type="checkbox" data-filter="services"${st.services ? " checked" : ""}> ${esc(t("filters.show_services"))}</label>
+      </div>`;
+    if (!list.length) return `<div class="box detail">${head}<div class="center ok">✓ ${esc(t("health.none"))}</div></div>`;
+    const rows = list.map(({ device: d, problems, used }) => {
+      const runs = d.usedBy.slice(0, 6).map((id) => `<button class="tag ${RUN_KIND[id.split(".")[0]] || "automation"}" data-nav="run:${esc(id)}">${esc(this._runName(id))}</button>`).join("")
+        + (d.usedBy.length > 6 ? `<span class="none"> +${d.usedBy.length - 6}</span>` : "")
+        + d.inViews.slice(0, 3).map((v) => `<button class="tag dashboard" data-nav="view:${esc(v)}">${esc(this._viewLabel(v))}</button>`).join("");
+      return `<tr>
+        <td><button class="lnk" data-nav="device:${esc(d.id)}">${esc(d.name)}</button><div class="eid">${esc([d.manufacturer, d.model].filter(Boolean).join(" · "))}</div></td>
+        <td>${d.area ? `<button class="lnk" data-nav="area:${esc(d.areaId)}">${esc(d.area)}</button>` : `<span class="none">—</span>`}</td>
+        <td><button class="lnk" data-nav="integration:${esc(d.domain)}">${esc(d.integration)}</button></td>
+        <td><div class="pills">${problems.map((p) => this._problemHtml(p)).join("")}</div></td>
+        <td>${used ? runs : `<span class="none">${esc(t("stats.unused"))}</span>`}</td>
+      </tr>`;
+    }).join("");
+    return `<div class="box detail">${head}
+      <div class="tbl"><table><thead><tr><th>${esc(t("detail.device"))}</th><th>${esc(t("detail.area"))}</th><th>${esc(t("detail.integration"))}</th><th>${esc(t("health.col_problems"))}</th><th>${esc(t("health.col_used"))}</th></tr></thead><tbody>${rows}</tbody></table></div>
     </div>`;
   }
 

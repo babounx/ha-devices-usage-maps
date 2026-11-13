@@ -50,6 +50,9 @@ a { color: var(--dum-accent); }
 .stat[aria-pressed="true"] { border-color: var(--dum-accent); color: var(--dum-accent); }
 .stat.bad b { color: var(--dum-bad); }
 .stat.bad { border-color: color-mix(in srgb, var(--dum-bad) 55%, var(--dum-line)); }
+.pill.warn { color: var(--dum-auto); background: color-mix(in srgb, var(--dum-auto) 14%, transparent); border-color: transparent; }
+.hfilters { flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.hfilters select { padding: 6px 8px; border: 1px solid var(--dum-line); border-radius: 5px; background: var(--dum-bg); color: var(--dum-fg); font: inherit; font-size: 13px; max-width: 100%; }
 .pill.bad { color: var(--dum-bad); background: color-mix(in srgb, var(--dum-bad) 12%, transparent); border-color: transparent; }
 .center.ok { color: var(--dum-energy); }
 table.broken td:first-child { border-right: 1px solid var(--dum-line); }

@@ -1,6 +1,7 @@
 // Devices Usage Maps — live data collection.
 // Everything comes from Home Assistant's WebSocket API; nothing is stored.
-import { findBroken } from "./broken.js";
+import { findBroken } from "./broken.js?v=1.2.0";
+import { fetchDrops, computeHealth } from "./health.js?v=1.2.0";
 
 const ENTITY_ID_RE = /\b([a-z_][a-z0-9_]*)\.([a-z0-9_]+)\b/g;
 const RUNNABLE_DOMAINS = ["automation", "script", "scene"];
@@ -191,6 +192,10 @@ export async function collect(hass, onProgress = () => {}) {
       id: eid,
       name: st?.attributes?.friendly_name || reg?.name || reg?.original_name || eid,
       state: st?.state ?? "—",
+      lastChanged: st?.last_changed || null,
+      deviceClass: st?.attributes?.device_class || null,
+      unit: st?.attributes?.unit_of_measurement || null,
+      restored: !!st?.attributes?.restored,
       tech: !!reg?.entity_category || TECH_DOMAINS.has(dom),
       uses: use.get(eid) || [],
       views: [...(dash.get(eid) || [])],
@@ -282,8 +287,15 @@ export async function collect(hass, onProgress = () => {}) {
   }
   for (const it of integrations.values()) if (it.category !== "protocol" && it.category !== "helper" && it.hasCamera) it.category = "camera";
 
+  // ---------- health ----------
+  onProgress("health", 0, 1);
+  const drops = await fetchDrops(hass, outDevices).catch(() => null);
+  const health = computeHealth(outDevices, drops);
+
   return {
     generatedAt: new Date(),
+    health,
+    historyOk: drops !== null,
     version: hass.config?.version || "",
     devices: outDevices,
     runnables,

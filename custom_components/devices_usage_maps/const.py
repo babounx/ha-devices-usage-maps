@@ -4,7 +4,7 @@ from __future__ import annotations
 
 DOMAIN = "devices_usage_maps"
 NAME = "Devices Usage Maps"
-VERSION = "0.2.0"
+VERSION = "1.2.0"
 
 # Static files (the frontend bundle) are served from this URL.
 STATIC_URL = "/devices_usage_maps_static"

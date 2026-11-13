@@ -1,10 +1,10 @@
 // Devices Usage Maps — entry point.
 // Loaded on every Home Assistant page by the integration (no dashboard
 // resource needed). Registers the card, its editor and the sidebar panel.
-import "./src/card.js";
-import "./src/panel.js";
+import "./src/card.js?v=1.2.0";
+import "./src/panel.js?v=1.2.0";
 
-const VERSION = "0.2.0";
+const VERSION = "1.2.0";
 
 window.customCards = window.customCards || [];
 if (!window.customCards.some((c) => c.type === "devices-usage-maps-card")) {

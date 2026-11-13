@@ -2,12 +2,13 @@
 // translate the values and register it in ../i18n.js.
 export default {
   title: "Devices Usage Maps",
-  tabs: { overview: "Overview", devices: "By device", automations: "By automation", broken: "Broken references" },
+  tabs: { overview: "Overview", devices: "By device", automations: "By automation", health: "Health", broken: "Broken references" },
   loading: "Reading your Home Assistant…",
   loading_step: {
     registries: "Reading devices and entities…",
     automations: "Analysing automations, scripts and scenes ({done}/{total})…",
     dashboards: "Reading dashboards…",
+    health: "Checking device health (24 h history)…",
   },
   error: "Could not read the data: {msg}",
   admin_required: "This card needs an administrator account to read automations and the related-items search.",
@@ -20,6 +21,7 @@ export default {
     unused: "used nowhere",
     automations: "automations enabled",
     broken: "broken references",
+    sick: "faulty devices",
   },
   overview: {
     heading: "How everything connects to Home Assistant",
@@ -108,6 +110,35 @@ export default {
     dashed: "dashed = via group / disabled",
   },
   groups: { automations: "Automations", scripts: "Scripts", scenes: "Scenes" },
+  health: {
+    heading: "Device health",
+    hint: "Offline devices, unstable ones (that drop out often), dead Z-Wave nodes, batteries under {low} % and entities no longer provided. The most serious, and those used by an automation or a dashboard, come first. “Unstable” = at least {drops} drop-outs in the last 24 h.",
+    no_history: "History could not be read: instability is not evaluated.",
+    none: "No faulty device with these filters.",
+    only_used: "Only those used somewhere",
+    col_problems: "Problems",
+    col_used: "Used by",
+    ago_min: "{n} min",
+    ago_h: "{n} h",
+    ago_d: "{n} d",
+    f: {
+      all: "All problems ({n})",
+      offline: "Offline / dead node ({n})",
+      unstable: "Unstable ({n})",
+      partial: "Partly offline ({n})",
+      battery: "Low battery ({n})",
+    },
+    p: {
+      offline: "Offline",
+      offline_since: "Offline for {ago}",
+      partial: "{n}/{total} entities unavailable",
+      dead: "Dead Z-Wave node",
+      unstable: "{n} drop-outs in 24 h",
+      battery: "Battery {v} %",
+      battery_low: "Low battery",
+      orphan: "{n} entities no longer provided",
+    },
+  },
   broken: {
     heading: "Broken references",
     hint: "Things your automations, scripts, scenes and dashboards use that no longer exist (renamed or deleted entity, removed device, missing action…). Click the source to fix it.",

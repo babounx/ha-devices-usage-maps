@@ -1,12 +1,13 @@
 // Français
 export default {
   title: "Devices Usage Maps",
-  tabs: { overview: "Vue d’ensemble", devices: "Par appareil", automations: "Par automatisation", broken: "Références cassées" },
+  tabs: { overview: "Vue d’ensemble", devices: "Par appareil", automations: "Par automatisation", health: "Santé", broken: "Références cassées" },
   loading: "Lecture de votre Home Assistant…",
   loading_step: {
     registries: "Lecture des appareils et des entités…",
     automations: "Analyse des automatisations, scripts et scènes ({done}/{total})…",
     dashboards: "Lecture des tableaux de bord…",
+    health: "Analyse de la santé des appareils (historique 24 h)…",
   },
   error: "Impossible de lire les données : {msg}",
   admin_required: "Cette carte nécessite un compte administrateur pour lire les automatisations et la recherche d’éléments liés.",
@@ -19,6 +20,7 @@ export default {
     unused: "utilisés nulle part",
     automations: "automatisations actives",
     broken: "références cassées",
+    sick: "appareils en défaut",
   },
   overview: {
     heading: "Comment tout se connecte à Home Assistant",
@@ -107,6 +109,35 @@ export default {
     dashed: "pointillés = via un groupe / désactivée",
   },
   groups: { automations: "Automatisations", scripts: "Scripts", scenes: "Scènes" },
+  health: {
+    heading: "Santé des appareils",
+    hint: "Appareils hors ligne, instables (qui décrochent souvent), nœuds Z-Wave morts, batteries sous {low} % et entités qui ne sont plus fournies. Les plus graves et ceux utilisés par une automatisation ou un tableau de bord sont en haut. « Instable » = au moins {drops} coupures sur les dernières 24 h.",
+    no_history: "L’historique n’a pas pu être lu : l’instabilité n’est pas évaluée.",
+    none: "Aucun appareil en défaut avec ces filtres.",
+    only_used: "Seulement ceux qui servent quelque part",
+    col_problems: "Problèmes",
+    col_used: "Utilisé par",
+    ago_min: "{n} min",
+    ago_h: "{n} h",
+    ago_d: "{n} j",
+    f: {
+      all: "Tous les problèmes ({n})",
+      offline: "Hors ligne / nœud mort ({n})",
+      unstable: "Instables ({n})",
+      partial: "Partiellement hors ligne ({n})",
+      battery: "Batterie faible ({n})",
+    },
+    p: {
+      offline: "Hors ligne",
+      offline_since: "Hors ligne depuis {ago}",
+      partial: "{n}/{total} entités indisponibles",
+      dead: "Nœud Z-Wave mort",
+      unstable: "{n} coupures en 24 h",
+      battery: "Batterie {v} %",
+      battery_low: "Batterie faible",
+      orphan: "{n} entités plus fournies",
+    },
+  },
   broken: {
     heading: "Références cassées",
     hint: "Ce que vos automatisations, scripts, scènes et tableaux de bord utilisent alors que cela n’existe plus (entité renommée ou supprimée, appareil retiré, action disparue…). Cliquez sur la source pour la corriger.",
