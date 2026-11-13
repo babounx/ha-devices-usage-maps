@@ -2,7 +2,7 @@
 // translate the values and register it in ../i18n.js.
 export default {
   title: "Devices Usage Maps",
-  tabs: { overview: "Overview", devices: "By device", automations: "By automation" },
+  tabs: { overview: "Overview", devices: "By device", automations: "By automation", broken: "Broken references" },
   loading: "Reading your Home Assistant…",
   loading_step: {
     registries: "Reading devices and entities…",
@@ -19,6 +19,7 @@ export default {
     dashboard: "shown on a dashboard",
     unused: "used nowhere",
     automations: "automations enabled",
+    broken: "broken references",
   },
   overview: {
     heading: "How everything connects to Home Assistant",
@@ -107,6 +108,39 @@ export default {
     dashed: "dashed = via group / disabled",
   },
   groups: { automations: "Automations", scripts: "Scripts", scenes: "Scenes" },
+  broken: {
+    heading: "Broken references",
+    hint: "Things your automations, scripts, scenes and dashboards use that no longer exist (renamed or deleted entity, removed device, missing action…). Click the source to fix it.",
+    none: "No broken references. Everything in use exists.",
+    show_all: "Include disabled steps and disabled automations ({n})",
+    disabled_step: "disabled step",
+    maybe: "Renamed to?",
+    col_source: "Used by",
+    col_ref: "Missing reference",
+    col_kind: "Problem",
+    col_where: "Where",
+    kind: {
+      entity: "Entity does not exist",
+      registry_entity: "Deleted entity (internal ID)",
+      orphan_entity: "No longer provided by its integration",
+      device: "Deleted device",
+      area: "Deleted area",
+      floor: "Deleted floor",
+      label: "Deleted label",
+      action: "Action does not exist",
+    },
+    section: {
+      triggers: "Triggers", trigger: "Triggers",
+      conditions: "Conditions", condition: "Conditions",
+      actions: "Actions", action: "Actions",
+      sequence: "Sequence",
+      use_blueprint: "Blueprint inputs",
+      entity_id: "Scene entities",
+      entities: "Scene entities",
+      variables: "Variables",
+      fields: "Fields",
+    },
+  },
   editor: {
     view: "Opening view",
     show_services: "Show service devices",

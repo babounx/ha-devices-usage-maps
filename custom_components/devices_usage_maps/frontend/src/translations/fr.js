@@ -1,7 +1,7 @@
 // Français
 export default {
   title: "Devices Usage Maps",
-  tabs: { overview: "Vue d’ensemble", devices: "Par appareil", automations: "Par automatisation" },
+  tabs: { overview: "Vue d’ensemble", devices: "Par appareil", automations: "Par automatisation", broken: "Références cassées" },
   loading: "Lecture de votre Home Assistant…",
   loading_step: {
     registries: "Lecture des appareils et des entités…",
@@ -18,6 +18,7 @@ export default {
     dashboard: "affichés sur un tableau de bord",
     unused: "utilisés nulle part",
     automations: "automatisations actives",
+    broken: "références cassées",
   },
   overview: {
     heading: "Comment tout se connecte à Home Assistant",
@@ -106,6 +107,39 @@ export default {
     dashed: "pointillés = via un groupe / désactivée",
   },
   groups: { automations: "Automatisations", scripts: "Scripts", scenes: "Scènes" },
+  broken: {
+    heading: "Références cassées",
+    hint: "Ce que vos automatisations, scripts, scènes et tableaux de bord utilisent alors que cela n’existe plus (entité renommée ou supprimée, appareil retiré, action disparue…). Cliquez sur la source pour la corriger.",
+    none: "Aucune référence cassée. Tout ce qui est utilisé existe.",
+    show_all: "Inclure les étapes désactivées et les automatisations désactivées ({n})",
+    disabled_step: "étape désactivée",
+    maybe: "Renommée en ?",
+    col_source: "Utilisé par",
+    col_ref: "Référence introuvable",
+    col_kind: "Problème",
+    col_where: "Où",
+    kind: {
+      entity: "Entité inexistante",
+      registry_entity: "Entité supprimée (ID interne)",
+      orphan_entity: "Plus fournie par son intégration",
+      device: "Appareil supprimé",
+      area: "Pièce supprimée",
+      floor: "Étage supprimé",
+      label: "Étiquette supprimée",
+      action: "Action inexistante",
+    },
+    section: {
+      triggers: "Déclencheurs", trigger: "Déclencheurs",
+      conditions: "Conditions", condition: "Conditions",
+      actions: "Actions", action: "Actions",
+      sequence: "Séquence",
+      use_blueprint: "Entrées du blueprint",
+      entity_id: "Entités de la scène",
+      entities: "Entités de la scène",
+      variables: "Variables",
+      fields: "Champs",
+    },
+  },
   editor: {
     view: "Vue à l’ouverture",
     show_services: "Afficher les appareils de service",

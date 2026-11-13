@@ -38,6 +38,7 @@ class DevicesUsageMapsCardEditor extends HTMLElement {
               { value: "overview", label: t("tabs.overview") },
               { value: "devices", label: t("tabs.devices") },
               { value: "automations", label: t("tabs.automations") },
+              { value: "broken", label: t("tabs.broken") },
             ],
           },
         },

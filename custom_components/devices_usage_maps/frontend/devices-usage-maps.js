@@ -4,7 +4,7 @@
 import "./src/card.js";
 import "./src/panel.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
 window.customCards = window.customCards || [];
 if (!window.customCards.some((c) => c.type === "devices-usage-maps-card")) {

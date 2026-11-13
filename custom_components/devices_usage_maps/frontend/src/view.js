@@ -136,6 +136,7 @@ export class DevicesUsageMapsView extends HTMLElement {
     if ((el = find("data-nav"))) { ev.stopPropagation(); follow(this, el.getAttribute("data-nav"), this._model); return; }
     if ((el = find("data-refresh"))) { this._load(); return; }
     if ((el = find("data-tab"))) { this._state.tab = el.getAttribute("data-tab"); this._state.selected = null; this._render(); return; }
+    if ((el = find("data-brokenfilter"))) { this._state.brokenAll = !this._state.brokenAll; this._render(); return; }
     if ((el = find("data-stat"))) { this._applyStat(el.getAttribute("data-stat")); return; }
     if ((el = find("data-integ"))) {
       Object.assign(this._state, { tab: "devices", integ: el.getAttribute("data-integ"), area: "", q: "", usage: "all", services: true, selected: null });
@@ -154,6 +155,7 @@ export class DevicesUsageMapsView extends HTMLElement {
   }
 
   _applyStat(k) {
+    if (k === "broken") { Object.assign(this._state, { tab: "broken", selected: null }); this._render(); return; }
     if (k === "on") Object.assign(this._state, { tab: "automations", autoFilter: "on", kindFilter: "automation", q: "", selected: null });
     else Object.assign(this._state, { tab: "devices", usage: k, q: "", area: "", integ: "", services: false, selected: null });
     this._render();
@@ -180,6 +182,7 @@ export class DevicesUsageMapsView extends HTMLElement {
       none: phys.filter((d) => d.unused).length,
       autosOn: autos.filter((r) => r.on).length,
       autos: autos.length,
+      broken: (m.broken || []).filter((b) => !b.disabled && b.source.on).length,
     };
   }
 
@@ -221,6 +224,7 @@ export class DevicesUsageMapsView extends HTMLElement {
     if (this._error) body = `<div class="box center error">${esc(this._error)}</div>`;
     else if (!this._model) body = `<div class="box center" id="progress">${esc(this._progressText())}</div>`;
     else if (this._state.tab === "overview") body = this._overviewHtml();
+    else if (this._state.tab === "broken") body = this._brokenHtml();
     else body = `<div class="main${this._narrow ? " narrow" : ""}"><aside class="side"><div class="filters" id="filters"></div><div class="list" id="list"></div></aside><section class="box detail" id="detail"></section></div>`;
 
     const tab = (k) => `<button class="tab" data-tab="${k}" aria-pressed="${this._state.tab === k}">${esc(t(`tabs.${k}`))}</button>`;
@@ -231,12 +235,12 @@ export class DevicesUsageMapsView extends HTMLElement {
           ${this._config.mode === "panel" ? "" : `<h1>${esc(this._config.title || t("title"))}</h1>`}
           ${time ? `<span class="updated">${esc(t("updated", { time }))}</span>` : ""}
           <button class="iconbtn" data-refresh title="${esc(t("refresh"))}" aria-label="${esc(t("refresh"))}">⟳</button>
-          <div class="tabs" role="group">${tab("overview")}${tab("devices")}${tab("automations")}</div>
+          <div class="tabs" role="group">${tab("overview")}${tab("devices")}${tab("automations")}${tab("broken")}</div>
         </div>
         ${this._model ? this._statsHtml() : ""}
         ${body}
       </div>`;
-    if (this._model && this._state.tab !== "overview") this._renderExplorer(true);
+    if (this._model && (this._state.tab === "devices" || this._state.tab === "automations")) this._renderExplorer(true);
   }
 
   _progressText() {
@@ -260,6 +264,7 @@ export class DevicesUsageMapsView extends HTMLElement {
       ${b("dash", s.dash, t("stats.dashboard"), clean && st.usage === "dash")}
       ${b("none", s.none, t("stats.unused"), clean && st.usage === "none")}
       ${b("on", `${s.autosOn}/${s.autos}`, t("stats.automations"), st.tab === "automations" && st.autoFilter === "on")}
+      <button class="stat${s.broken ? " bad" : " good"}" data-stat="broken" aria-pressed="${st.tab === "broken"}"><b>${s.broken}</b>${esc(t("stats.broken"))}</button>
     </div>`;
   }
 
@@ -307,6 +312,61 @@ export class DevicesUsageMapsView extends HTMLElement {
       <div class="note">${esc(t("overview.used_arc"))}</div>
       <div class="cats">${cats}</div>
       <div class="tbl"><table><thead><tr><th>${esc(t("overview.table_integration"))}</th><th>${esc(t("overview.table_devices"))}</th><th>${esc(t("overview.table_automated"))}</th><th>${esc(t("overview.table_dashboard"))}</th><th>${esc(t("overview.table_unused"))}</th></tr></thead><tbody>${rows}</tbody></table></div>
+    </div>`;
+  }
+
+  _brokenWhere(b) {
+    const t = this.t;
+    const parts = [];
+    if (b.source.kind !== "dashboard" && b.section) {
+      const sec = t(`broken.section.${b.section}`);
+      parts.push(sec.startsWith("broken.") ? b.section : sec);
+    }
+    if (b.step) parts.push(`“${b.step}”`);
+    let html = esc(parts.join(" › ") || "—");
+    if (b.inTemplate) html += ` <span class="tag via">${esc(t("detail.via_template"))}</span>`;
+    if (b.disabled) html += ` <span class="tag off">${esc(t("broken.disabled_step"))}</span>`;
+    return html;
+  }
+
+  _brokenRef(b) {
+    const t = this.t;
+    let html = `<div class="eid">${esc(b.ref)}</div>`;
+    if (b.kind === "orphan_entity") html = `<button class="lnk" data-nav="entity:${esc(b.ref)}">${esc(b.ref)}</button>${b.platform ? ` <span class="none">(${esc(b.platform)})</span>` : ""}`;
+    if (b.suggestion) html += `<div class="note">${esc(t("broken.maybe"))} <button class="lnk" data-nav="entity:${esc(b.suggestion)}">${esc(b.suggestion)}</button></div>`;
+    return html;
+  }
+
+  _brokenHtml() {
+    const t = this.t, m = this._model, st = this._state;
+    const all = m.broken || [];
+    const list = st.brokenAll ? all : all.filter((b) => !b.disabled && b.source.on);
+    const hidden = all.length - list.length;
+    const head = `<div class="dh"><h2>${esc(t("broken.heading"))}</h2></div>
+      <div class="note">${esc(t("broken.hint"))}</div>
+      ${hidden || st.brokenAll ? `<label class="chk"><input type="checkbox" data-brokenfilter${st.brokenAll ? " checked" : ""}> ${esc(t("broken.show_all", { n: all.filter((b) => b.disabled || !b.source.on).length }))}</label>` : ""}`;
+    if (!list.length) return `<div class="box detail">${head}<div class="center ok">✓ ${esc(t("broken.none"))}</div></div>`;
+    const kindOrder = { automation: 0, script: 1, scene: 2, dashboard: 3 };
+    const bySrc = new Map();
+    for (const b of list) {
+      const k = `${b.source.kind}|${b.source.id}`;
+      if (!bySrc.has(k)) bySrc.set(k, { source: b.source, items: [] });
+      bySrc.get(k).items.push(b);
+    }
+    const groups = [...bySrc.values()].sort((a, b) => (kindOrder[a.source.kind] - kindOrder[b.source.kind]) || (b.source.on - a.source.on) || a.source.name.localeCompare(b.source.name));
+    const rows = groups.map(({ source, items }) => {
+      const kind = source.kind;
+      const label = kind === "dashboard" ? this._viewLabel(source.id) : source.name;
+      const typeLabel = t(`detail.${kind}`);
+      return items.map((b, i) => `<tr>
+        ${i === 0 ? `<td rowspan="${items.length}"><button class="tag ${kind}${source.on ? "" : " off"}" data-nav="${esc(source.nav)}" title="${esc(source.id)}">${esc(label)}</button><div class="none">${esc(typeLabel)}${source.on ? "" : ` · ${esc(t("detail.disabled"))}`}</div></td>` : ""}
+        <td>${this._brokenRef(b)}</td>
+        <td><span class="pill bad">${esc(t(`broken.kind.${b.kind}`))}</span></td>
+        <td>${this._brokenWhere(b)}</td>
+      </tr>`).join("");
+    }).join("");
+    return `<div class="box detail">${head}
+      <div class="tbl"><table class="broken"><thead><tr><th>${esc(t("broken.col_source"))}</th><th>${esc(t("broken.col_ref"))}</th><th>${esc(t("broken.col_kind"))}</th><th>${esc(t("broken.col_where"))}</th></tr></thead><tbody>${rows}</tbody></table></div>
     </div>`;
   }
 

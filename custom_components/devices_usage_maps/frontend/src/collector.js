@@ -1,5 +1,6 @@
 // Devices Usage Maps — live data collection.
 // Everything comes from Home Assistant's WebSocket API; nothing is stored.
+import { findBroken } from "./broken.js";
 
 const ENTITY_ID_RE = /\b([a-z_][a-z0-9_]*)\.([a-z0-9_]+)\b/g;
 const RUNNABLE_DOMAINS = ["automation", "script", "scene"];
@@ -44,7 +45,7 @@ export async function collect(hass, onProgress = () => {}) {
   const safe = (p, fallback) => p.catch(() => fallback);
 
   onProgress("registries", 0, 1);
-  const [devices, entityReg, areas, entries, manifests, dashboards, energy] = await Promise.all([
+  const [devices, entityReg, areas, entries, manifests, dashboards, energy, floors, labels] = await Promise.all([
     ws("config/device_registry/list"),
     ws("config/entity_registry/list"),
     safe(ws("config/area_registry/list"), []),
@@ -52,6 +53,8 @@ export async function collect(hass, onProgress = () => {}) {
     safe(ws("manifest/list"), []),
     safe(ws("lovelace/dashboards/list"), []),
     safe(ws("energy/get_prefs"), null),
+    safe(ws("config/floor_registry/list"), []),
+    safe(ws("config/label_registry/list"), []),
   ]);
 
   const states = hass.states;
@@ -81,6 +84,7 @@ export async function collect(hass, onProgress = () => {}) {
   // ---------- automations / scripts / scenes ----------
   const runnableIds = Object.keys(states).filter((e) => RUNNABLE_DOMAINS.includes(e.split(".")[0]));
   const runnables = {};
+  const configs = new Map(); // runnable id -> stored configuration
   let done = 0;
   await pool(runnableIds, 6, async (eid) => {
     const dom = eid.split(".")[0];
@@ -91,6 +95,8 @@ export async function collect(hass, onProgress = () => {}) {
     ]);
     const st = states[eid];
     const reg = regByEntity.get(eid);
+    if (cfg) configs.set(eid, cfg.config ?? cfg);
+    else if (dom === "scene" && Array.isArray(st?.attributes?.entity_id)) configs.set(eid, { entity_id: st.attributes.entity_id });
     const direct = new Set((related.entity || []).filter((e) => e !== eid));
     const fromTemplates = cfg ? [...findIds(cfg.config ?? cfg, known)].filter((e) => e !== eid && !direct.has(e)) : [];
     runnables[eid] = {
@@ -152,6 +158,22 @@ export async function collect(hass, onProgress = () => {}) {
     if (!dashVia.has(m)) dashVia.set(m, new Set());
     vs.forEach((v) => dashVia.get(m).add(v));
   }
+
+  // ---------- broken references ----------
+  const brokenItems = [];
+  for (const [eid, config] of configs) {
+    const r = runnables[eid];
+    if (r) brokenItems.push({ source: { kind: r.domain, id: eid, name: r.name, on: r.on, nav: `run:${eid}` }, config });
+  }
+  boards.forEach((b, bi) => {
+    const cfg = boardCfgs[bi];
+    if (!cfg || !Array.isArray(cfg.views)) return;
+    cfg.views.forEach((v, vi) => {
+      const key = `${b.url_path || "lovelace"}/${v.path || vi}`;
+      brokenItems.push({ source: { kind: "dashboard", id: key, name: key, on: true, nav: `view:${key}` }, config: { views: v } });
+    });
+  });
+  const broken = findBroken({ states, services: hass.services, entityReg, devices, areas, floors, labels }, brokenItems);
 
   // ---------- energy ----------
   const energySet = energy ? findIds(energy, known) : new Set();
@@ -266,6 +288,7 @@ export async function collect(hass, onProgress = () => {}) {
     devices: outDevices,
     runnables,
     views,
+    broken,
     integrations: [...integrations.values()],
     areas: areas.map((a) => ({ id: a.area_id, name: a.name })),
     entityCount: known.size,

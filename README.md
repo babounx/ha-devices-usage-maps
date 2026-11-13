@@ -1,6 +1,7 @@
 # Devices Usage Maps
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Validate](https://github.com/babounx/ha-devices-usage-maps/actions/workflows/validate.yml/badge.svg)](https://github.com/babounx/ha-devices-usage-maps/actions/workflows/validate.yml)
 
 *[Version française plus bas](#version-française)*
@@ -10,12 +11,10 @@ See at a glance **what every device in Home Assistant is used for**: which autom
 - **Overview**: Home Assistant in the centre, your integrations grouped by family (radio & protocols, cameras, local network, cloud, system, helpers). Each bubble shows the number of devices and the share used somewhere.
 - **By device**: a diagram *Integration → Device → Entities → Automations / scripts / scenes / dashboard views / Energy*, plus a table of every entity.
 - **By automation**: the reverse view — every device and area an automation, script or scene touches.
+- **Broken references**: lists every entity, device, area, label or action that an automation, script, scene or dashboard still uses although it no longer exists (renamed or deleted entity, removed device, entity no longer provided by its integration, missing action), with the step where it is used and a guess at what a renamed entity became.
 - **Everything is clickable**: devices, entities, automations, scripts, scenes, integrations, areas, dashboard views and the Energy dashboard open directly in Home Assistant.
 - **Live**: data is read from Home Assistant when the page opens and refreshed automatically when devices, entities, automations, scripts, scenes or dashboards change.
 - **Your language**: follows each user's Home Assistant language (English and French included, contributions welcome).
-
-<img width="1392" height="1029" alt="maps" src="https://github.com/user-attachments/assets/125eccc7-1896-4959-8f00-6ca33129b661" />
-
 
 ## Installation
 
@@ -38,7 +37,7 @@ Copy `custom_components/devices_usage_maps` into your `config/custom_components/
 
 ```yaml
 type: custom:devices-usage-maps-card
-view: overview        # overview | devices | automations
+view: overview        # overview | devices | automations | broken
 show_services: false  # include service devices (HACS, add-ons, weather…)
 height: 900           # optional, in px; scrolls inside the card
 ```
@@ -68,7 +67,8 @@ Nothing leaves your Home Assistant. The integration only serves the frontend fil
 
 ## License
 
-[MIT](LICENSE)
+Devices Usage Maps is free software, released under the [GNU General Public License v3.0](LICENSE).
+You may redistribute and modify it under the terms of that license; any distributed modified version must remain under GPL-3.0 and publish its source code.
 
 ---
 
@@ -79,6 +79,7 @@ Voyez d'un coup d'œil **à quoi sert chaque appareil de Home Assistant** : les 
 - **Vue d'ensemble** : Home Assistant au centre, vos intégrations regroupées par famille. Chaque bulle indique le nombre d'appareils et la part utilisée.
 - **Par appareil** : schéma *Intégration → Appareil → Entités → Automatisations / scripts / scènes / vues / Énergie*, et tableau de toutes les entités.
 - **Par automatisation** : la vue inverse, avec les appareils et pièces touchés.
+- **Références cassées** : tout ce qu'une automatisation, un script, une scène ou un tableau de bord utilise encore alors que cela n'existe plus (entité renommée ou supprimée, appareil retiré, entité plus fournie par son intégration, action disparue), avec l'étape concernée et une proposition quand l'entité semble avoir été renommée.
 - **Tout est cliquable** et ouvre directement la page correspondante dans Home Assistant.
 - **En direct** : mise à jour automatique quand vos appareils, automatisations ou tableaux de bord changent.
 - **Dans votre langue** : celle de chaque utilisateur (français et anglais fournis).
@@ -93,3 +94,6 @@ Voyez d'un coup d'œil **à quoi sert chaque appareil de Home Assistant** : les 
 - **Carte** : toujours disponible (Modifier le tableau de bord › Ajouter une carte › **Devices Usage Maps**), sans ressource à ajouter. Pour la pleine page, placez-la dans une vue de type *Panneau*.
 
 Nécessite Home Assistant 2024.12 ou plus récent et un **compte administrateur**.
+
+### Licence
+Logiciel libre publié sous [licence GNU GPL v3.0](LICENSE).

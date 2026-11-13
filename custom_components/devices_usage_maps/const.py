@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 DOMAIN = "devices_usage_maps"
-NAME = "Devices Maps"
-VERSION = "0.1.0"
+NAME = "Devices Usage Maps"
+VERSION = "0.2.0"
 
 # Static files (the frontend bundle) are served from this URL.
 STATIC_URL = "/devices_usage_maps_static"
@@ -22,7 +22,7 @@ CONF_REQUIRE_ADMIN = "require_admin"
 
 DEFAULT_OPTIONS: dict[str, object] = {
     CONF_SHOW_IN_SIDEBAR: True,
-    CONF_SIDEBAR_TITLE: NAME,
+    CONF_SIDEBAR_TITLE: "Device Maps",
     CONF_SIDEBAR_ICON: "mdi:graph-outline",
     # Reading automation/script configs and the "related" search requires admin.
     CONF_REQUIRE_ADMIN: True,

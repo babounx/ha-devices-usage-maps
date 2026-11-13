@@ -19,6 +19,7 @@ export const styles = `
   --dum-cloud: #2a8f8f;
   --dum-system: #8e5bb5;
   --dum-helper: #7a7f85;
+  --dum-bad: var(--error-color, #db4437);
   display: block;
   color: var(--dum-fg);
   font-family: var(--ha-font-family-body, var(--paper-font-body1_-_font-family, system-ui, sans-serif));
@@ -47,6 +48,11 @@ a { color: var(--dum-accent); }
 .stat b { font-size: 15px; color: var(--dum-fg); margin-right: 4px; font-variant-numeric: tabular-nums; }
 .stat:hover { border-color: var(--dum-accent); }
 .stat[aria-pressed="true"] { border-color: var(--dum-accent); color: var(--dum-accent); }
+.stat.bad b { color: var(--dum-bad); }
+.stat.bad { border-color: color-mix(in srgb, var(--dum-bad) 55%, var(--dum-line)); }
+.pill.bad { color: var(--dum-bad); background: color-mix(in srgb, var(--dum-bad) 12%, transparent); border-color: transparent; }
+.center.ok { color: var(--dum-energy); }
+table.broken td:first-child { border-right: 1px solid var(--dum-line); }
 .box { background: var(--dum-panel); border: 1px solid var(--dum-line); border-radius: 8px; padding: 16px; min-width: 0; }
 .muted { color: var(--dum-muted); }
 .note { color: var(--dum-muted); font-size: 12px; }
